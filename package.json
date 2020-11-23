@@ -1,18 +1,14 @@
 {
-  "name": "smarto",
-  "version": "4.0.0",
-  "description": "Smarto web-site",
-  "private": true,
+  "name": "default-react-app",
+  "version": "1.0.0",
+  "description": "default-react-app",
+  "private": false,
   "main": "index.js",
   "scripts": {
     "watch": "webpack serve",
     "production": "webpack --env mode=production",
     "development": "webpack --env mode=development"
   },
-  "keywords": [
-    "smarto",
-    "site"
-  ],
   "author": "Ilya Chernetsky <ceo@smarto.pro>",
   "license": "ISC",
   "devDependencies": {
