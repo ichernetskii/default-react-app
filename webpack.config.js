@@ -201,14 +201,12 @@ module.exports = (env = {}) => {
                 // CSS loaders
                 {
                     test: /\.(css)$/,
-                    exclude: /node_modules/,
                     use: cssLoaders()
                 },
 
                 // SCSS loaders
                 {
                     test: /\.(s[ca]ss)$/,
-                    exclude: /node_modules/,
                     use: cssLoaders("sass-loader")
                 }
             ]
