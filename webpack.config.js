@@ -4,6 +4,7 @@ const htmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCSSExtractPlugin = require("mini-css-extract-plugin");
 const path = require("path");
 const {CleanWebpackPlugin} = require("clean-webpack-plugin");
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 
 /* --------------- config -------------------------------------- */
 
@@ -124,7 +125,11 @@ module.exports = (env = {}) => {
         optimization: {
             splitChunks: {
                 chunks: isProd ? "all" : "async"
-            }
+            },
+            minimizer: [
+                `...`,
+                new CssMinimizerPlugin()
+            ]
         },
         performance: {
             maxEntrypointSize: isProd ? 250000 : 1024*1024,
