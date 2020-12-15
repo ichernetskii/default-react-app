@@ -1,11 +1,16 @@
+// React
 import React from "react";
 import ReactDOM from "react-dom";
-import "../style/main.scss";
+
+// Translation
 import i18next from "i18next";
 import {initReactI18next, useTranslation} from "react-i18next";
-import en from "../translation/en.json";
-import ru from "../translation/ru.json";
-import de from "../translation/de.json";
+import en from "translation/en.json";
+import ru from "translation/ru.json";
+import de from "translation/de.json";
+
+// Components
+import App from "components/app";
 
 i18next
     .use(initReactI18next)
@@ -21,27 +26,5 @@ i18next
         keySeparator: "."
     });
 
-
-const Img = () => {
-    const [ t, i18n ] = useTranslation();
-
-    return (
-        <>
-            <p>{t("hello")}</p>
-            <img className={"img"} src={require("../img/react.png")}  alt={"react"}/>
-        </>
-    )
-}
-
-const App = () => {
-    return (
-        <>
-            <button onClick={() => i18next.changeLanguage('ru')}>RU</button>
-            <button onClick={() => i18next.changeLanguage('en')}>EN</button>
-            <button onClick={() => i18next.changeLanguage('de')}>DE</button><br/>
-            <Img />
-        </>
-    );
-};
 
 ReactDOM.render(<App />, document.getElementById("root"));

@@ -1,0 +1,121 @@
+Options All -Indexes -Includes +FollowSymLinks
+# -Indexes: запрещает показывать содержимое каталогов, если в них нет индексного файла
+# -Includes: запрещает SSI
+# +FollowSymLinks: позволяет использовать символические ссылки на файлы или каталоги, не находящиеся в пределах корня вашего сайта
+
+# Редирект с http на https
+RewriteEngine On
+RewriteCond %{SERVER_PORT} !^(4430|3000)$
+RewriteRule .* https://%{SERVER_NAME}:4430%{REQUEST_URI} [L,R=301]
+
+# Редирект на без www
+RewriteCond %{HTTP_HOST} ^www\.(.*)$
+RewriteRule ^(.*)$ http://%1/$1 [L,R=301]
+
+# 301 редирект всех адресов с index.php и GET параметрами на страницы только с GET параметрами (вырезать в url index.php). Пример: типа site.ru/index.php?n=1 на site.ru?n=1
+RewriteCond %{REQUEST_URI} (.*)/index.php(.*)
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%1%2 [L,R=301]
+
+# Задаём индексный файл
+DirectoryIndex index.php index.html index.htm
+
+<IfModule mod_setenvif.c>
+	SetEnv TZ Europe/Moscow
+	# Устанавливаем часовой пояс
+</IfModule>
+ServerSignature Off
+# Скрывать данные о софте на сервере
+AddDefaultCharset UTF-8
+
+# Настройки PHP
+<IfModule mod_php.c>
+  php_value	upload_max_filesize	64M
+  php_value	post_max_size		64M
+  php_value memory_limit        128M
+  php_value	default_charset     utf-8
+  php_value	max_execution_time  600
+</IfModule>
+
+# Позволим php файлам иметь расширение html, но выполняться как php
+AddHandler application/x-httpd-php .html
+
+# Какие расширения файлов должны выполняться как cgi скрипты
+AddHandler cgi-script .pl .py .jsp .asp .htm .shtml .sh .cgi
+
+# На всякий случай уточняем mine-тип файлов
+AddType application/x-javascript .js
+AddType text/css .css
+AddType text/xml .xml
+
+# При обращении к данным файлам будет предлагаться скачать их на компьютер, а не открыть их прямо в браузере
+AddType application/octet-stream .doc .docx .xls .xlsx .mov .avi .pdf .txt .zip .rar
+
+# Настройка сжатия
+
+<IfModule mod_deflate.c>
+	AddOutputFilterByType DEFLATE text/html text/plain text/xml application/xml application/xhtml+xml text/css text/javascript application/javascript application/x-javascript
+</IfModule>
+
+<IfModule mod_gzip.c>
+	mod_gzip_on         Yes
+	mod_gzip_dechunk    Yes
+	mod_gzip_item_include file		\.(html?|txt|css|js|php|pl)$
+	mod_gzip_item_include mime		^text\.*
+	mod_gzip_item_include mime		^application/x-javascript.*
+	mod_gzip_item_exclude mime		^image\.*
+	mod_gzip_item_exclude rspheader	^Content-Encoding:.*gzip.*
+</IfModule>
+
+# Кеширование
+
+<IfModule mod_expires.c>
+	ExpiresActive On
+	# По умолчанию кеш в 5 секунд
+	ExpiresDefault "access plus 5 seconds"
+	ExpiresByType text/html "access plus 1 hour"
+	ExpiresByType application/xhtml+xml "access plus 1 hour"
+    ExpiresByType text/php "access plus 1 hour"
+	ExpiresByType text/javascript "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+    ExpiresByType application/x-javascript "access plus 1 week"
+    ExpiresByType application/json "access plus 1 month"
+	ExpiresByType text/css "access plus 1 week"
+  	ExpiresByType text/xml "access plus 1 month"
+    ExpiresByType image/gif "access plus 2 month"
+    ExpiresByType image/jpeg "access plus 2 month"
+    ExpiresByType image/png "access plus 2 month"
+    ExpiresByType image/svg+xml "access plus 2 month"
+    ExpiresByType image/webp "access plus 2 month"
+    ExpiresByType image/x-icon "access plus 2 month"
+	ExpiresByType font/ttf "access plus 1 year"
+    ExpiresByType font/eot "access plus 1 year"
+    ExpiresByType font/otf "access plus 1 year"
+    ExpiresByType font/woff "access plus 1 year"
+</IfModule>
+
+# Страницы ошибок
+
+# Bad Request
+ErrorDocument 400 /400.html
+# Authorization Required
+ErrorDocument 401 /401.html
+# Forbidden
+ErrorDocument 403 /403.html
+# Not found
+ErrorDocument 404 /404.html
+# Method Not Allowed
+ErrorDocument 405 /405.html
+# Request Timed Out
+ErrorDocument 408 /408.html
+# Request URI Too Long
+ErrorDocument 414 /414.html
+# Internal Server Error
+ErrorDocument 500 /500.html
+# Not Implemented
+ErrorDocument 501 /501.html
+# Bad Gateway
+ErrorDocument 502 /502.html
+# Service Unavailable
+ErrorDocument 503 /503.html
+# Gateway Timeout
+ErrorDocument 504 /504.html

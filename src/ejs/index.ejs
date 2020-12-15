@@ -6,12 +6,9 @@
 <html lang="<%= htmlWebpackPlugin.options.lang %>">
 <!--!
     Website is created in web-studio Smarto: https://smarto.pro
-    Copyright (C) 2020 Smarto
+    Copyright (C) <%= new Date().getFullYear() %> Smarto
 -->
 <head>
-    <meta charset="utf-8" />
-    <meta content="ie=edge" http-equiv="x-ua-compatible" />
-
     <!-- <base> -->
     <% if (htmlWebpackPlugin.options.baseHref) { %>
         <base href="<%= htmlWebpackPlugin.options.baseHref %>" />
@@ -55,8 +52,16 @@
            <link href="<%= htmlWebpackPlugin.files.css[key] %>" rel="stylesheet" />
         <% } %>
     <% } %>
+
+    <% if (htmlWebpackPlugin.options.headHtmlSnippet) { %>
+        <%= htmlWebpackPlugin.options.headHtmlSnippet %>
+    <% } %>
 </head>
 <body>
+    <% if (htmlWebpackPlugin.options.bodyHtmlSnippet) { %>
+        <%= htmlWebpackPlugin.options.bodyHtmlSnippet %>
+    <% } %>
+
     <!-- React root -->
     <div id="root"></div>
 

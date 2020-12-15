@@ -5,6 +5,9 @@ const MiniCSSExtractPlugin = require("mini-css-extract-plugin");
 const path = require("path");
 const {CleanWebpackPlugin} = require("clean-webpack-plugin");
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+const CopyWebpackPlugin = require("copy-webpack-plugin");
+const ImageminPlugin = require("imagemin-webpack-plugin").default;
+const imageminMozjpeg = require("imagemin-mozjpeg");
 
 /* --------------- config -------------------------------------- */
 
@@ -28,7 +31,9 @@ const paths = {
         style: "style",
         translation: "translation",
         img: "img",
-        html: "ejs"
+        html: "ejs",
+        fonts: "fonts",
+        components: "components"
     }
 };
 
@@ -45,6 +50,7 @@ module.exports = (env = {}) => {
 /* --------------- functions ----------------------------------- */
 
     const getFilenameTemplate = (ext) => isProd ? `[name]-[hash:8].${ext}` : `[name].${ext}`;
+    const fixSlashes = path => path.replace("\\","/");
     const getPlugins = () => {
         let plugins = [
             new CleanWebpackPlugin({
@@ -53,21 +59,73 @@ module.exports = (env = {}) => {
             new htmlWebpackPlugin({
                 inject: false,
                 chunks: ["main"],
-                template: path.join(paths.folders.html, "index.ejs"),
+                template: fixSlashes(path.join(paths.folders.html, "index.ejs")),
                 filename: "index.html",
                 lang: "ru",
+                meta: [
+                    { charset: "utf-8" },
+                    { content: "ie=edge", "http-equiv": "x-ua-compatible" },
+                    { name: "description", content: "", lang: "ru" },
+                    { name: "author", content: "Smarto" },
+                    { name: "robots", content: isProd ? "index, follow" : "none" }
+                ],
+                links: [
+                    // blank favicon
+                    {
+                        rel: "icon",
+                        href: "data:;base64,iVBORw0KGgo="
+                    }
+                ],
+                headHtmlSnippet: `
+                    <!--[if lt IE 9]>
+                        <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/r29/html5.min.js"></script>
+                    <![endif]-->
+                `,
+                title: "Default title",
                 mobile: true,
                 buildDate: new Date().toString(),
                 minify: isProd
             })
         ];
 
+        // .htaccess
+        plugins.push(
+            new CopyWebpackPlugin({
+                patterns: [
+                    { from: `htaccess/.htaccess.${isProd ? "release" : "debug"}`, to: ".htaccess", toType: "file" }
+                ],
+            })
+        );
+
         if (isProd) {
             plugins.push(
                 new MiniCSSExtractPlugin({
-                    filename: path.join(paths.folders.style, "main-[hash:8].css")
+                    filename: fixSlashes(path.join(paths.folders.style, "main-[hash:8].css"))
                 })
-            )
+            );
+
+            // Compress images
+            plugins.push(
+                new ImageminPlugin({
+                    test: /\.(jpe?g|png|gif|svg|webp)$/i,
+                    optipng: {
+                        optimizationLevel: 6,
+                    },
+                    svgo: {
+                        plugins: [ {
+                            removeViewBox: false
+                        }, {
+                            convertStyleToAttrs: false
+                        }]
+                    },
+                    plugins: [
+                        imageminMozjpeg({
+                            quality: 70,
+                            progressive: true
+                        })
+                    ]
+                })
+            );
         }
 
         return plugins;
@@ -114,12 +172,14 @@ module.exports = (env = {}) => {
         target: isProd ? "browserslist" : "web", // disable browserslist for development
         devtool: isProd ? undefined : "source-map",
         resolve: {
+            extensions: [".js", ".jsx", ".json"],
             alias: {
                 "@": paths.src.abs,
-                "@js": path.resolve(paths.src.abs, paths.folders.js),
-                "@style": path.resolve(paths.src.abs, paths.folders.style),
-                "@img": path.resolve(paths.src.abs, paths.folders.img),
-                "@translation": path.resolve(paths.src.abs, paths.folders.translation),
+                "js": path.resolve(paths.src.abs, paths.folders.js),
+                "style": path.resolve(paths.src.abs, paths.folders.style),
+                "img": path.resolve(paths.src.abs, paths.folders.img),
+                "translation": path.resolve(paths.src.abs, paths.folders.translation),
+                "components": path.resolve(paths.src.abs, paths.folders.components)
             }
         },
         optimization: {
@@ -127,6 +187,7 @@ module.exports = (env = {}) => {
                 chunks: isProd ? "all" : "async"
             },
             minimizer: [
+                // For webpack@5 you can use the `...` syntax to extend existing minimizers (i.e. `terser-webpack-plugin`), uncomment the next line
                 `...`,
                 new CssMinimizerPlugin()
             ]
@@ -145,12 +206,12 @@ module.exports = (env = {}) => {
             }
         },
         entry: {
-            main: "./" + path.join(paths.folders.js, "index.js")
+            main: fixSlashes("./" + path.join(paths.folders.js, "index.js"))
         },
         output: {
             path: isProd ? paths.dist.release.abs : paths.dist.debug.abs,
             publicPath: "./",
-            filename: path.join(paths.folders.js, getFilenameTemplate("js"))
+            filename: fixSlashes(path.join(paths.folders.js, getFilenameTemplate("js")))
         },
         module: {
             rules: [
@@ -167,7 +228,7 @@ module.exports = (env = {}) => {
                 // Loading images
                 {
                     test: /\.(png|jpe?g|gif|ico)$/,
-                    exclude: /node_modules/,
+                    exclude: path.resolve(__dirname, paths.src.rel, paths.folders.fonts),
                     use: [
                         {
                             loader: "file-loader",
@@ -180,16 +241,22 @@ module.exports = (env = {}) => {
                     ]
                 },
 
+                // Loading SVG images
+                {
+                    test: /\.(svg)$/,
+                    exclude: path.resolve(__dirname, paths.src.rel, paths.folders.fonts),
+                    use: [ "babel-loader", "react-svg-loader" ]
+                },
+
                 // Loading fonts
                 {
-                    test: /\.(ttf|otf|eot|woff|woff2)$/,
-                    exclude: /node_modules/,
+                    test: /fonts.*\.(ttf|otf|eot|woff2?|svg)$/,
                     use: [
                         {
                             loader: "file-loader",
                             options: {
-                                outputPath: "fonts",
-                                name: "[name].[ext]",
+                                name: "[path][name].[ext]",
+                                publicPath: isProd ? "../" : "",
                                 esModule: false
                             }
                         }
@@ -198,7 +265,7 @@ module.exports = (env = {}) => {
 
                 // Babel loader
                 {
-                    test: /\.js$/,
+                    test: /\.jsx?$/,
                     exclude: /node_modules/,
                     use: "babel-loader"
                 },
