@@ -200,10 +200,12 @@ module.exports = (env = {}) => {
         devServer: {
             open: true,
             port: 4200,
+            publicPath: "/",
             overlay: {
                 warnings: true,
                 errors: true
-            }
+            },
+            historyApiFallback: true
         },
         entry: {
             main: fixSlashes("./" + path.join(paths.folders.js, "index.js"))
