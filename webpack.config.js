@@ -200,6 +200,23 @@ module.exports = (env = {}) => {
         devServer: {
             open: true,
             port: 4200,
+            proxy: {
+                "/api": {
+                    target: "http://localhost:5000"
+                },
+                "/*/**": {
+                    pathRewrite: function (path, req) {
+                        const index = req.rawHeaders.findIndex(item => item === "Referer");
+                        if (index === -1) return ""; // not found header
+                        const u = req.rawHeaders[index + 1].replace(/\/[^\/]*$/, "");
+                        const url = new URL(u);
+                        const pathName = url.pathname;
+                        return req.url.replace(pathName, "");
+                    },
+                    target: "http://localhost:4200",
+                    changeOrigin: false
+                }
+            },
             publicPath: "/",
             overlay: {
                 warnings: true,
